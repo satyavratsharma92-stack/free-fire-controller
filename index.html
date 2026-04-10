@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreeFire Controller v4 — Project Docs</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050810;
+    --surface: #0a0f1e;
+    --card: #0d1428;
+    --border: #1a2a4a;
+    --accent: #00f5ff;
+    --accent2: #ff6b00;
+    --accent3: #7c3aed;
+    --text: #c8d8f0;
+    --text-dim: #5a7090;
+    --green: #00ff88;
+    --red: #ff3366;
+    --glow: 0 0 20px rgba(0,245,255,0.3);
+    --glow2: 0 0 20px rgba(255,107,0,0.3);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events:none; z-index:9999;
+  }
+
+  /* Animated grid background */
+  body::after {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events:none; z-index:0;
+    animation: gridShift 20s linear infinite;
+  }
+  @keyframes gridShift { from{background-position:0 0;} to{background-position:60px 60px;} }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position:relative; z-index:1; }
+
+  /* ─── HEADER ─── */
+  header {
+    padding: 60px 0 40px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content:'';
+    position:absolute; top:-100px; left:50%; transform:translateX(-50%);
+    width:600px; height:300px;
+    background: radial-gradient(ellipse, rgba(0,245,255,0.08) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .header-tag {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--accent);
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0.7;
+  }
+  h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(28px, 5vw, 56px);
+    font-weight: 900;
+    letter-spacing: 2px;
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--accent) 0%, #0080ff 50%, var(--accent2) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    margin-bottom: 16px;
+  }
+  .subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--text-dim);
+    font-size: 13px;
+    letter-spacing: 2px;
+  }
+  .badges { display:flex; gap:10px; flex-wrap:wrap; margin-top:20px; }
+  .badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    padding: 4px 12px;
+    border-radius: 2px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .badge-cyan { background: rgba(0,245,255,0.1); border:1px solid rgba(0,245,255,0.4); color: var(--accent); }
+  .badge-orange { background: rgba(255,107,0,0.1); border:1px solid rgba(255,107,0,0.4); color: var(--accent2); }
+  .badge-green { background: rgba(0,255,136,0.1); border:1px solid rgba(0,255,136,0.4); color: var(--green); }
+
+  /* ─── NAV ─── */
+  nav {
+    position: sticky; top:0; z-index: 100;
+    background: rgba(5,8,16,0.9);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0;
+  }
+  .nav-inner { display:flex; gap:0; overflow-x:auto; }
+  nav a {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 14px 20px;
+    border-right: 1px solid var(--border);
+    white-space: nowrap;
+    transition: all 0.2s;
+    position: relative;
+  }
+  nav a::after {
+    content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+    background: var(--accent); transform:scaleX(0); transition:transform 0.2s;
+  }
+  nav a:hover { color: var(--accent); background: rgba(0,245,255,0.04); }
+  nav a:hover::after { transform:scaleX(1); }
+
+  /* ─── SECTIONS ─── */
+  section { padding: 60px 0; border-bottom: 1px solid var(--border); }
+  .section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(18px, 3vw, 28px);
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 32px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    margin-bottom: 16px;
+    letter-spacing: 1px;
+  }
+
+  /* ─── OVERVIEW CARDS ─── */
+  .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .ov-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.2s;
+  }
+  .ov-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+  }
+  .ov-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--glow); }
+  .ov-icon { font-size: 24px; margin-bottom: 10px; }
+  .ov-label { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; margin-bottom:4px; }
+  .ov-value { font-family:'Orbitron',monospace; font-size:16px; color:#fff; font-weight:700; }
+  .ov-sub { font-size:12px; color:var(--text-dim); margin-top:4px; }
+
+  /* ─── 3D MODEL ─── */
+  .model-container {
+    width: 100%; height: 500px;
+    background: radial-gradient(ellipse at center, #0a1428 0%, var(--bg) 70%);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .model-container canvas { display:block; width:100%!important; height:100%!important; }
+  .model-label {
+    position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+    font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text-dim);
+    letter-spacing:2px; text-transform:uppercase;
+    background: rgba(5,8,16,0.7); padding:6px 16px; border:1px solid var(--border);
+  }
+  .model-controls {
+    position:absolute; top:16px; right:16px;
+    font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--text-dim);
+    letter-spacing:1px; text-align:right; line-height:1.8;
+    background: rgba(5,8,16,0.7); padding:8px 12px; border:1px solid var(--border);
+  }
+
+  /* ─── PINOUT TABLE ─── */
+  .pin-table { width:100%; border-collapse:collapse; font-family:'Share Tech Mono',monospace; font-size:13px; }
+  .pin-table th {
+    background: rgba(0,245,255,0.08);
+    color: var(--accent);
+    font-size:10px; letter-spacing:2px; text-transform:uppercase;
+    padding: 10px 16px; text-align:left;
+    border-bottom: 1px solid var(--border);
+  }
+  .pin-table td { padding: 10px 16px; border-bottom: 1px solid rgba(26,42,74,0.5); color: var(--text); }
+  .pin-table tr:hover td { background: rgba(0,245,255,0.03); }
+  .pin-analog { color: var(--accent); }
+  .pin-digital { color: var(--accent2); }
+  .pin-power { color: var(--green); }
+
+  /* ─── CODE BLOCKS ─── */
+  .code-wrap {
+    background: #060b18;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    overflow: hidden;
+  }
+  .code-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 10px 16px;
+    background: rgba(0,245,255,0.04);
+    border-bottom: 1px solid var(--border);
+  }
+  .code-lang {
+    font-family:'Share Tech Mono',monospace; font-size:10px;
+    color:var(--accent); letter-spacing:2px; text-transform:uppercase;
+  }
+  .code-file { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--text-dim); }
+  pre {
+    padding: 20px;
+    overflow-x: auto;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #a8c4e0;
+    max-height: 420px;
+    overflow-y: auto;
+  }
+  pre::-webkit-scrollbar { width:6px; height:6px; }
+  pre::-webkit-scrollbar-track { background: var(--bg); }
+  pre::-webkit-scrollbar-thumb { background: var(--border); border-radius:3px; }
+
+  /* Syntax colors */
+  .kw { color: #7c9fff; }
+  .fn { color: var(--accent); }
+  .str { color: #98c379; }
+  .num { color: var(--accent2); }
+  .cm { color: var(--text-dim); font-style:italic; }
+  .cls { color: #e5c07b; }
+  .var { color: #e06c75; }
+
+  /* ─── FLOW DIAGRAM ─── */
+  .flow-svg { width:100%; max-width:800px; display:block; margin:0 auto; }
+
+  /* ─── LOGIC CARDS ─── */
+  .logic-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:16px; }
+  .logic-card {
+    background: var(--card); border: 1px solid var(--border); padding:20px;
+    transition: all 0.3s;
+  }
+  .logic-card:hover { border-color: var(--accent2); box-shadow: var(--glow2); }
+  .logic-title { font-family:'Orbitron',monospace; font-size:12px; color: var(--accent2); margin-bottom:12px; letter-spacing:1px; }
+  .logic-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(26,42,74,0.4); font-family:'Share Tech Mono',monospace; font-size:11px; }
+  .logic-row:last-child { border:none; }
+  .logic-input { color: var(--text-dim); }
+  .logic-arrow { color: var(--accent); margin:0 8px; }
+  .logic-output { color: var(--green); }
+
+  /* ─── FOOTER ─── */
+  footer {
+    padding: 40px 0;
+    text-align: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+  .footer-glow {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px;
+    font-weight:900;
+    color: var(--accent);
+    margin-bottom: 12px;
+    text-shadow: var(--glow);
+  }
+
+  /* Animations */
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+  .fade-up { animation: fadeUp 0.6s ease forwards; }
+  .delay-1 { animation-delay:0.1s; opacity:0; }
+  .delay-2 { animation-delay:0.2s; opacity:0; }
+  .delay-3 { animation-delay:0.3s; opacity:0; }
+
+  /* Warning box */
+  .warn-box {
+    background: rgba(255,107,0,0.06); border:1px solid rgba(255,107,0,0.3);
+    padding: 16px 20px; font-size:13px; color: var(--text);
+    border-left: 3px solid var(--accent2);
+    margin-bottom: 20px;
+  }
+  .warn-box strong { color: var(--accent2); font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:2px; }
+
+  /* Info box */
+  .info-box {
+    background: rgba(0,245,255,0.04); border:1px solid rgba(0,245,255,0.2);
+    padding: 16px 20px; font-size:13px; color: var(--text);
+    border-left: 3px solid var(--accent);
+    margin-bottom: 20px;
+    line-height: 1.7;
+  }
+  .info-box strong { color: var(--accent); }
+
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  @media(max-width:700px) { .two-col { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+<div class="container">
+  <div class="header-tag fade-up">// project documentation v1.0</div>
+  <h1 class="fade-up delay-1">FREEFIRE CONTROLLER</h1>
+  <div class="subtitle fade-up delay-2">ARDUINO + PYTHON | DUAL JOYSTICK | WASD + AIM | v4.2</div>
+  <div class="badges fade-up delay-3">
+    <span class="badge badge-cyan">Arduino UNO/Nano</span>
+    <span class="badge badge-orange">Python 3.14</span>
+    <span class="badge badge-green">Windows</span>
+    <span class="badge badge-cyan">Serial COM3</span>
+    <span class="badge badge-orange">9600 Baud</span>
+    <span class="badge badge-green">2 Joysticks · 4 Buttons</span>
+  </div>
+</div>
+</header>
+
+<!-- NAV -->
+<nav>
+<div class="container nav-inner">
+  <a href="#overview">Overview</a>
+  <a href="#model">3D Model</a>
+  <a href="#pinout">Pinout</a>
+  <a href="#arduino">Arduino Code</a>
+  <a href="#python">Python Code</a>
+  <a href="#logic">Control Logic</a>
+  <a href="#flow">Data Flow</a>
+  <a href="#setup">Setup</a>
+</div>
+</nav>
+
+<!-- OVERVIEW -->
+<section id="overview">
+<div class="container">
+  <div class="section-label">// 01 — system overview</div>
+  <h2>What This Does</h2>
+  <div class="info-box">
+    A <strong>dual-joystick USB game controller</strong> built on Arduino, communicating over serial to a Python script that translates physical inputs into keyboard and mouse events for FreeFire on Windows. No drivers needed — pure <strong>ctypes + pynput</strong> automation.
+  </div>
+  <div class="overview-grid">
+    <div class="ov-card">
+      <div class="ov-icon">🎮</div>
+      <div class="ov-label">Left Joystick</div>
+      <div class="ov-value">Mouse Aim</div>
+      <div class="ov-sub">X=A0, Y=A1 · Click=Scope</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-icon">⌨️</div>
+      <div class="ov-label">Right Joystick</div>
+      <div class="ov-value">WASD Move</div>
+      <div class="ov-sub">X=A2, Y=A3 · Click=Fire</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-icon">🔵</div>
+      <div class="ov-label">Buttons</div>
+      <div class="ov-value">4 Actions</div>
+      <div class="ov-sub">Space · G · Q · R</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-icon">📡</div>
+      <div class="ov-label">Communication</div>
+      <div class="ov-value">Serial</div>
+      <div class="ov-sub">COM3 · 9600 baud · 10 values</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-icon">🐍</div>
+      <div class="ov-label">Python</div>
+      <div class="ov-value">pynput + ctypes</div>
+      <div class="ov-sub">Keyboard & mouse injection</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-icon">⚡</div>
+      <div class="ov-label">Loop Speed</div>
+      <div class="ov-value">20ms</div>
+      <div class="ov-sub">50 Hz update rate</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 3D MODEL -->
+<section id="model">
+<div class="container">
+  <div class="section-label">// 02 — hardware model</div>
+  <h2>3D Controller Visualization</h2>
+  <div class="model-container" id="modelContainer">
+    <canvas id="c3d"></canvas>
+    <div class="model-label">DRAG TO ROTATE · SCROLL TO ZOOM</div>
+    <div class="model-controls">
+      🖱 Drag = Rotate<br>
+      ⚙ Scroll = Zoom<br>
+      🔵 Blue = Buttons<br>
+      ⬜ Grey = Joysticks
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- PINOUT -->
+<section id="pinout">
+<div class="container">
+  <div class="section-label">// 03 — hardware pinout</div>
+  <h2>Arduino Pin Mapping</h2>
+  <div class="two-col">
+    <div>
+      <h3>ANALOG INPUTS</h3>
+      <table class="pin-table">
+        <thead><tr><th>Arduino Pin</th><th>Function</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td class="pin-analog">A0</td><td>Left Joy X (Aim H)</td><td>0–1023</td></tr>
+          <tr><td class="pin-analog">A1</td><td>Left Joy Y (Aim V)</td><td>0–1023</td></tr>
+          <tr><td class="pin-analog">A2</td><td>Right Joy X (A/D)</td><td>0–1023</td></tr>
+          <tr><td class="pin-analog">A3</td><td>Right Joy Y (W/S)</td><td>0–1023</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3>DIGITAL INPUTS (INPUT_PULLUP)</h3>
+      <table class="pin-table">
+        <thead><tr><th>Arduino Pin</th><th>Function</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td class="pin-digital">D2</td><td>LSW — Left Joy Click</td><td>Scope / ADS</td></tr>
+          <tr><td class="pin-digital">D3</td><td>RSW — Right Joy Click</td><td>Fire (LMB)</td></tr>
+          <tr><td class="pin-digital">D4</td><td>BTN1</td><td>Spacebar (Jump)</td></tr>
+          <tr><td class="pin-digital">D5</td><td>BTN2</td><td>G (Grenade)</td></tr>
+          <tr><td class="pin-digital">D6</td><td>BTN3</td><td>Q (Ability)</td></tr>
+          <tr><td class="pin-digital">D7</td><td>BTN4</td><td>R (Reload)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div style="margin-top:20px;">
+    <div class="warn-box">
+      <strong>⚠ INPUT_PULLUP NOTE</strong><br>
+      All digital pins use <code>INPUT_PULLUP</code>. This means <strong>0 = pressed, 1 = released</strong>. The Python script accounts for this with the <code>lsw == 0</code> and <code>btn == 0</code> checks.
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ARDUINO CODE -->
+<section id="arduino">
+<div class="container">
+  <div class="section-label">// 04 — arduino firmware</div>
+  <h2>Arduino Code — arduino_v4.ino</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <span class="code-lang">C++ / Arduino</span>
+      <span class="code-file">arduino_v4.ino</span>
+    </div>
+<pre><span class="kw">const int</span> <span class="var">LX_PIN</span>  = <span class="num">A0</span>;  <span class="cm">// Left Joy X  → Mouse horizontal</span>
+<span class="kw">const int</span> <span class="var">LY_PIN</span>  = <span class="num">A1</span>;  <span class="cm">// Left Joy Y  → Mouse vertical</span>
+<span class="kw">const int</span> <span class="var">LSW_PIN</span> = <span class="num">2</span>;   <span class="cm">// Left Joy Click → Scope (Right Mouse)</span>
+<span class="kw">const int</span> <span class="var">RX_PIN</span>  = <span class="num">A2</span>;  <span class="cm">// Right Joy X → A / D keys</span>
+<span class="kw">const int</span> <span class="var">RY_PIN</span>  = <span class="num">A3</span>;  <span class="cm">// Right Joy Y → W / S keys</span>
+<span class="kw">const int</span> <span class="var">RSW_PIN</span> = <span class="num">3</span>;   <span class="cm">// Right Joy Click → Fire (Left Mouse)</span>
+<span class="kw">const int</span> <span class="var">BTN1_PIN</span> = <span class="num">4</span>;  <span class="cm">// Spacebar</span>
+<span class="kw">const int</span> <span class="var">BTN2_PIN</span> = <span class="num">5</span>;  <span class="cm">// G key</span>
+<span class="kw">const int</span> <span class="var">BTN3_PIN</span> = <span class="num">6</span>;  <span class="cm">// Q key</span>
+<span class="kw">const int</span> <span class="var">BTN4_PIN</span> = <span class="num">7</span>;  <span class="cm">// R key</span>
+
+<span class="kw">void</span> <span class="fn">setup</span>() {
+  Serial.<span class="fn">begin</span>(<span class="num">9600</span>);
+  <span class="fn">pinMode</span>(<span class="var">LSW_PIN</span>,  INPUT_PULLUP);  <span class="cm">// 0=pressed, 1=released</span>
+  <span class="fn">pinMode</span>(<span class="var">RSW_PIN</span>,  INPUT_PULLUP);  <span class="cm">// 0=pressed, 1=released</span>
+  <span class="fn">pinMode</span>(<span class="var">BTN1_PIN</span>, INPUT_PULLUP);
+  <span class="fn">pinMode</span>(<span class="var">BTN2_PIN</span>, INPUT_PULLUP);
+  <span class="fn">pinMode</span>(<span class="var">BTN3_PIN</span>, INPUT_PULLUP);
+  <span class="fn">pinMode</span>(<span class="var">BTN4_PIN</span>, INPUT_PULLUP);
+}
+
+<span class="kw">void</span> <span class="fn">loop</span>() {
+  <span class="kw">int</span> lx  = <span class="fn">analogRead</span>(<span class="var">LX_PIN</span>);   <span class="cm">// 0–1023</span>
+  <span class="kw">int</span> ly  = <span class="fn">analogRead</span>(<span class="var">LY_PIN</span>);   <span class="cm">// 0–1023</span>
+  <span class="kw">int</span> lsw = <span class="fn">digitalRead</span>(<span class="var">LSW_PIN</span>); <span class="cm">// 0=clicked</span>
+  <span class="kw">int</span> rx  = <span class="fn">analogRead</span>(<span class="var">RX_PIN</span>);   <span class="cm">// 0–1023</span>
+  <span class="kw">int</span> ry  = <span class="fn">analogRead</span>(<span class="var">RY_PIN</span>);   <span class="cm">// 0–1023</span>
+  <span class="kw">int</span> rsw = <span class="fn">digitalRead</span>(<span class="var">RSW_PIN</span>); <span class="cm">// 0=clicked</span>
+  <span class="kw">int</span> btn1 = <span class="fn">digitalRead</span>(<span class="var">BTN1_PIN</span>);
+  <span class="kw">int</span> btn2 = <span class="fn">digitalRead</span>(<span class="var">BTN2_PIN</span>);
+  <span class="kw">int</span> btn3 = <span class="fn">digitalRead</span>(<span class="var">BTN3_PIN</span>);
+  <span class="kw">int</span> btn4 = <span class="fn">digitalRead</span>(<span class="var">BTN4_PIN</span>);
+
+  Serial.<span class="fn">print</span>(lx);   Serial.<span class="fn">print</span>(<span class="str">','</span>);
+  Serial.<span class="fn">print</span>(ly);   Serial.<span class="fn">print</span>(<span class="str">','</span>);
+  Serial.<span class="fn">print</span>(lsw);  Serial.<span class="fn">print</span>(<span class="str">','</span>);
+  Serial.<span class="fn">print</span>(rx);   Serial.<span class="fn">print</span>(<span class="str">','</span>);
+  Serial.<span class="fn">print</span>(ry);   Serial.<span class="fn">print</span>(<span class="str">','</span>);
+  Serial.<span class="fn">print</span>(rsw);  Serial.<span class="fn">print</span>(<span class="str">','</span>);
+  Serial.<span class="fn">print</span>(btn1); Serial.<span class="fn">print</span>(<span class="str">','</span>);
+  Serial.<span class="fn">print</span>(btn2); Serial.<span class="fn">print</span>(<span class="str">','</span>);
+  Serial.<span class="fn">print</span>(btn3); Serial.<span class="fn">print</span>(<span class="str">','</span>);
+  Serial.<span class="fn">println</span>(btn4);
+
+  <span class="fn">delay</span>(<span class="num">20</span>);
+}</pre>
+  </div>
+</div>
+</section>
+
+<!-- PYTHON CODE -->
+<section id="python">
+<div class="container">
+  <div class="section-label">// 05 — python script</div>
+  <h2>Python Script — final.py</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <span class="code-lang">Python 3</span>
+      <span class="code-file">final.py — Imports & Config</span>
+    </div>
+<pre><span class="cm"># pip install pyserial keyboard pynput</span>
+<span class="cm"># Run as ADMINISTRATOR</span>
+
+<span class="kw">import</span> serial
+<span class="kw">import</span> time
+<span class="kw">import</span> sys
+<span class="kw">import</span> keyboard
+<span class="kw">import</span> ctypes
+<span class="kw">from</span> pynput.mouse <span class="kw">import</span> Button, Controller <span class="kw">as</span> MouseController
+
+<span class="cm"># ── Config ────────────────────────────────────────</span>
+<span class="var">COM_PORT</span>        = <span class="str">'COM3'</span>
+<span class="var">BAUD_RATE</span>       = <span class="num">9600</span>
+<span class="var">DEADZONE_LOW</span>    = <span class="num">400</span>
+<span class="var">DEADZONE_HIGH</span>   = <span class="num">624</span>
+<span class="var">AIM_SENSITIVITY</span> = <span class="num">20</span>
+
+<span class="cm"># ── Low-level mouse MOVE only (for in-game camera) ─</span>
+<span class="kw">class</span> <span class="cls">MOUSEINPUT</span>(ctypes.Structure):
+    <span class="var">_fields_</span> = [
+        (<span class="str">"dx"</span>,          ctypes.c_long),
+        (<span class="str">"dy"</span>,          ctypes.c_long),
+        (<span class="str">"mouseData"</span>,   ctypes.c_ulong),
+        (<span class="str">"dwFlags"</span>,     ctypes.c_ulong),
+        (<span class="str">"time"</span>,        ctypes.c_ulong),
+        (<span class="str">"dwExtraInfo"</span>, ctypes.POINTER(ctypes.c_ulong)),
+    ]
+
+<span class="kw">class</span> <span class="cls">INPUT</span>(ctypes.Structure):
+    <span class="kw">class</span> <span class="cls">_INPUT</span>(ctypes.Union):
+        <span class="var">_fields_</span> = [(<span class="str">"mi"</span>, MOUSEINPUT)]
+    <span class="var">_anonymous_</span> = (<span class="str">"_input"</span>,)
+    <span class="var">_fields_</span> = [(<span class="str">"type"</span>, ctypes.c_ulong), (<span class="str">"_input"</span>, <span class="cls">_INPUT</span>)]
+
+<span class="kw">def</span> <span class="fn">send_mouse_move</span>(dx, dy):
+    inp = <span class="cls">INPUT</span>()
+    inp.type = <span class="num">0</span>
+    inp.mi.dx = dx
+    inp.mi.dy = dy
+    inp.mi.mouseData = <span class="num">0</span>
+    inp.mi.dwFlags = <span class="num">0x0001</span>  <span class="cm"># MOUSEEVENTF_MOVE</span>
+    inp.mi.time = <span class="num">0</span>
+    inp.mi.dwExtraInfo = <span class="kw">None</span>
+    ctypes.windll.user32.<span class="fn">SendInput</span>(<span class="num">1</span>, ctypes.<span class="fn">byref</span>(inp), ctypes.<span class="fn">sizeof</span>(inp))
+
+<span class="cm"># ── Mouse (pynput) for clicks only ────────────────</span>
+mc         = MouseController()
+fire_held  = <span class="kw">False</span>
+scope_held = <span class="kw">False</span>
+w_held = a_held = s_held = d_held = <span class="kw">False</span>
+space_held = <span class="kw">False</span>
+g_held     = <span class="kw">False</span>
+q_held     = <span class="kw">False</span>
+r_held     = <span class="kw">False</span>
+
+<span class="kw">def</span> <span class="fn">delta</span>(v):
+    <span class="kw">if</span> <span class="var">DEADZONE_LOW</span> &lt; v &lt; <span class="var">DEADZONE_HIGH</span>:
+        <span class="kw">return</span> <span class="num">0</span>
+    n = (v - <span class="num">512</span>) / <span class="num">512.0</span>
+    <span class="kw">return</span> <span class="fn">int</span>(n * <span class="fn">abs</span>(n) * <span class="var">AIM_SENSITIVITY</span>)</pre>
+  </div>
+
+  <div style="margin-top:20px;">
+  <div class="code-wrap">
+    <div class="code-header">
+      <span class="code-lang">Python 3</span>
+      <span class="code-file">final.py — Connect &amp; Main Loop</span>
+    </div>
+<pre><span class="cm"># ── Connect ───────────────────────────────────────</span>
+<span class="fn">print</span>(<span class="str">f"Connecting to {COM_PORT}..."</span>)
+<span class="kw">try</span>:
+    ser = serial.<span class="cls">Serial</span>(<span class="var">COM_PORT</span>, <span class="var">BAUD_RATE</span>, timeout=<span class="num">1</span>)
+<span class="kw">except</span> Exception <span class="kw">as</span> e:
+    <span class="fn">print</span>(<span class="str">f"ERROR: {e}"</span>); sys.<span class="fn">exit</span>(<span class="num">1</span>)
+time.<span class="fn">sleep</span>(<span class="num">2</span>)
+ser.<span class="fn">flushInput</span>()
+<span class="fn">print</span>(<span class="str">"Ready! Push RIGHT joystick for WASD, LEFT joystick for mouse."</span>)
+<span class="fn">print</span>(<span class="str">"Ctrl+C to stop.\n"</span>)
+
+<span class="cm"># ── Main loop ─────────────────────────────────────</span>
+<span class="kw">try</span>:
+    <span class="kw">while True</span>:
+        <span class="kw">try</span>:
+            line = ser.readline().<span class="fn">decode</span>(<span class="str">'utf-8'</span>).<span class="fn">strip</span>()
+            <span class="kw">if not</span> line: <span class="kw">continue</span>
+            p = line.<span class="fn">split</span>(<span class="str">','</span>)
+            <span class="kw">if</span> <span class="fn">len</span>(p) != <span class="num">10</span>: <span class="kw">continue</span>
+            lx, ly, lsw, rx, ry, rsw, btn1, btn2, btn3, btn4 = [<span class="fn">int</span>(x) <span class="kw">for</span> x <span class="kw">in</span> p]
+        <span class="kw">except</span>: <span class="kw">continue</span>
+
+        <span class="cm"># RIGHT joystick → WASD (axes swapped)</span>
+        <span class="kw">if</span> ry &gt; <span class="var">DEADZONE_HIGH</span> <span class="kw">and not</span> w_held:
+            keyboard.<span class="fn">press</span>(<span class="str">'w'</span>); w_held = <span class="kw">True</span>
+        <span class="kw">elif</span> ry &lt;= <span class="var">DEADZONE_HIGH</span> <span class="kw">and</span> w_held:
+            keyboard.<span class="fn">release</span>(<span class="str">'w'</span>); w_held = <span class="kw">False</span>
+
+        <span class="kw">if</span> ry &lt; <span class="var">DEADZONE_LOW</span> <span class="kw">and not</span> s_held:
+            keyboard.<span class="fn">press</span>(<span class="str">'s'</span>); s_held = <span class="kw">True</span>
+        <span class="kw">elif</span> ry &gt;= <span class="var">DEADZONE_LOW</span> <span class="kw">and</span> s_held:
+            keyboard.<span class="fn">release</span>(<span class="str">'s'</span>); s_held = <span class="kw">False</span>
+
+        <span class="kw">if</span> rx &gt; <span class="var">DEADZONE_HIGH</span> <span class="kw">and not</span> a_held:
+            keyboard.<span class="fn">press</span>(<span class="str">'a'</span>); a_held = <span class="kw">True</span>
+        <span class="kw">elif</span> rx &lt;= <span class="var">DEADZONE_HIGH</span> <span class="kw">and</span> a_held:
+            keyboard.<span class="fn">release</span>(<span class="str">'a'</span>); a_held = <span class="kw">False</span>
+
+        <span class="kw">if</span> rx &lt; <span class="var">DEADZONE_LOW</span> <span class="kw">and not</span> d_held:
+            keyboard.<span class="fn">press</span>(<span class="str">'d'</span>); d_held = <span class="kw">True</span>
+        <span class="kw">elif</span> rx &gt;= <span class="var">DEADZONE_LOW</span> <span class="kw">and</span> d_held:
+            keyboard.<span class="fn">release</span>(<span class="str">'d'</span>); d_held = <span class="kw">False</span>
+
+        <span class="cm"># BTN1 → Spacebar</span>
+        <span class="kw">if</span> btn1 == <span class="num">0</span> <span class="kw">and not</span> space_held:
+            keyboard.<span class="fn">press</span>(<span class="str">'space'</span>); space_held = <span class="kw">True</span>
+        <span class="kw">elif</span> btn1 == <span class="num">1</span> <span class="kw">and</span> space_held:
+            keyboard.<span class="fn">release</span>(<span class="str">'space'</span>); space_held = <span class="kw">False</span>
+
+        <span class="cm"># BTN2 → G key</span>
+        <span class="kw">if</span> btn2 == <span class="num">0</span> <span class="kw">and not</span> g_held:
+            keyboard.<span class="fn">press</span>(<span class="str">'g'</span>); g_held = <span class="kw">True</span>
+        <span class="kw">elif</span> btn2 == <span class="num">1</span> <span class="kw">and</span> g_held:
+            keyboard.<span class="fn">release</span>(<span class="str">'g'</span>); g_held = <span class="kw">False</span>
+
+        <span class="cm"># BTN3 → Q key</span>
+        <span class="kw">if</span> btn3 == <span class="num">0</span> <span class="kw">and not</span> q_held:
+            keyboard.<span class="fn">press</span>(<span class="str">'q'</span>); q_held = <span class="kw">True</span>
+        <span class="kw">elif</span> btn3 == <span class="num">1</span> <span class="kw">and</span> q_held:
+            keyboard.<span class="fn">release</span>(<span class="str">'q'</span>); q_held = <span class="kw">False</span>
+
+        <span class="cm"># BTN4 → R key</span>
+        <span class="kw">if</span> btn4 == <span class="num">0</span> <span class="kw">and not</span> r_held:
+            keyboard.<span class="fn">press</span>(<span class="str">'r'</span>); r_held = <span class="kw">True</span>
+        <span class="kw">elif</span> btn4 == <span class="num">1</span> <span class="kw">and</span> r_held:
+            keyboard.<span class="fn">release</span>(<span class="str">'r'</span>); r_held = <span class="kw">False</span>
+
+        <span class="cm"># RIGHT click → Scope (RSW)</span>
+        <span class="kw">if</span> rsw == <span class="num">0</span> <span class="kw">and not</span> scope_held:
+            mc.<span class="fn">press</span>(Button.right); scope_held = <span class="kw">True</span>
+        <span class="kw">elif</span> rsw == <span class="num">1</span> <span class="kw">and</span> scope_held:
+            mc.<span class="fn">release</span>(Button.right); scope_held = <span class="kw">False</span>
+
+        <span class="cm"># LEFT joystick → Camera/Head aim</span>
+        mx, my = <span class="fn">delta</span>(lx), <span class="fn">delta</span>(ly)
+        <span class="kw">if</span> mx <span class="kw">or</span> my: <span class="fn">send_mouse_move</span>(mx, my)
+
+        <span class="cm"># LEFT click → Fire (LSW)</span>
+        <span class="kw">if</span> lsw == <span class="num">0</span> <span class="kw">and not</span> fire_held:
+            mc.<span class="fn">press</span>(Button.left); fire_held = <span class="kw">True</span>
+        <span class="kw">elif</span> lsw == <span class="num">1</span> <span class="kw">and</span> fire_held:
+            mc.<span class="fn">release</span>(Button.left); fire_held = <span class="kw">False</span>
+
+<span class="kw">except</span> KeyboardInterrupt:
+    <span class="kw">if</span> w_held:     keyboard.<span class="fn">release</span>(<span class="str">'w'</span>)
+    <span class="kw">if</span> a_held:     keyboard.<span class="fn">release</span>(<span class="str">'a'</span>)
+    <span class="kw">if</span> s_held:     keyboard.<span class="fn">release</span>(<span class="str">'s'</span>)
+    <span class="kw">if</span> d_held:     keyboard.<span class="fn">release</span>(<span class="str">'d'</span>)
+    <span class="kw">if</span> space_held: keyboard.<span class="fn">release</span>(<span class="str">'space'</span>)
+    <span class="kw">if</span> g_held:     keyboard.<span class="fn">release</span>(<span class="str">'g'</span>)
+    <span class="kw">if</span> q_held:     keyboard.<span class="fn">release</span>(<span class="str">'q'</span>)
+    <span class="kw">if</span> r_held:     keyboard.<span class="fn">release</span>(<span class="str">'r'</span>)
+    <span class="kw">if</span> fire_held:  mc.<span class="fn">release</span>(Button.left)
+    <span class="kw">if</span> scope_held: mc.<span class="fn">release</span>(Button.right)
+    ser.<span class="fn">close</span>()
+    <span class="fn">print</span>(<span class="str">"Stopped."</span>)</pre>
+  </div>
+  </div>
+</div>
+</section>
+
+<!-- LOGIC -->
+<section id="logic">
+<div class="container">
+  <div class="section-label">// 06 — control logic</div>
+  <h2>Input → Action Mapping</h2>
+  <div class="logic-grid">
+    <div class="logic-card">
+      <div class="logic-title">🕹 LEFT JOYSTICK — AIM</div>
+      <div class="logic-row"><span class="logic-input">X &gt; 624</span><span class="logic-arrow">→</span><span class="logic-output">Mouse RIGHT</span></div>
+      <div class="logic-row"><span class="logic-input">X &lt; 400</span><span class="logic-arrow">→</span><span class="logic-output">Mouse LEFT</span></div>
+      <div class="logic-row"><span class="logic-input">Y &gt; 624</span><span class="logic-arrow">→</span><span class="logic-output">Mouse DOWN</span></div>
+      <div class="logic-row"><span class="logic-input">Y &lt; 400</span><span class="logic-arrow">→</span><span class="logic-output">Mouse UP</span></div>
+      <div class="logic-row"><span class="logic-input">400–624</span><span class="logic-arrow">→</span><span class="logic-output">Deadzone (no move)</span></div>
+      <div class="logic-row"><span class="logic-input">Click (LSW=0)</span><span class="logic-arrow">→</span><span class="logic-output">Left Click (Fire)</span></div>
+    </div>
+    <div class="logic-card">
+      <div class="logic-title">🕹 RIGHT JOYSTICK — MOVE</div>
+      <div class="logic-row"><span class="logic-input">X &gt; 624</span><span class="logic-arrow">→</span><span class="logic-output">Press A</span></div>
+      <div class="logic-row"><span class="logic-input">X &lt; 400</span><span class="logic-arrow">→</span><span class="logic-output">Press D</span></div>
+      <div class="logic-row"><span class="logic-input">Y &gt; 624</span><span class="logic-arrow">→</span><span class="logic-output">Press W</span></div>
+      <div class="logic-row"><span class="logic-input">Y &lt; 400</span><span class="logic-arrow">→</span><span class="logic-output">Press S</span></div>
+      <div class="logic-row"><span class="logic-input">400–624</span><span class="logic-arrow">→</span><span class="logic-output">Release all WASD</span></div>
+      <div class="logic-row"><span class="logic-input">Click (RSW=0)</span><span class="logic-arrow">→</span><span class="logic-output">Right Click (Scope)</span></div>
+    </div>
+    <div class="logic-card">
+      <div class="logic-title">🔵 PUSH BUTTONS</div>
+      <div class="logic-row"><span class="logic-input">BTN1 (D4=0)</span><span class="logic-arrow">→</span><span class="logic-output">Space (Jump)</span></div>
+      <div class="logic-row"><span class="logic-input">BTN2 (D5=0)</span><span class="logic-arrow">→</span><span class="logic-output">G (Grenade)</span></div>
+      <div class="logic-row"><span class="logic-input">BTN3 (D6=0)</span><span class="logic-arrow">→</span><span class="logic-output">Q (Ability)</span></div>
+      <div class="logic-row"><span class="logic-input">BTN4 (D7=0)</span><span class="logic-arrow">→</span><span class="logic-output">R (Reload)</span></div>
+      <div class="logic-row"><span class="logic-input">Any BTN=1</span><span class="logic-arrow">→</span><span class="logic-output">Released</span></div>
+    </div>
+    <div class="logic-card">
+      <div class="logic-title">📐 SENSITIVITY FORMULA</div>
+      <div style="font-family:'Share Tech Mono',monospace; font-size:12px; color:var(--text); line-height:2; padding-top:8px;">
+        <div style="color:var(--accent);">d = (v − 512) / 512.0</div>
+        <div style="color:var(--text-dim); font-size:10px; margin-bottom:8px;">normalize to −1.0 … +1.0</div>
+        <div style="color:var(--accent2);">move = int(n × |n| × sensitivity)</div>
+        <div style="color:var(--text-dim); font-size:10px; margin-bottom:8px;">quadratic scaling for fine aim</div>
+        <div style="color:var(--green);">sensitivity = 20  (adjustable)</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- FLOW -->
+<section id="flow">
+<div class="container">
+  <div class="section-label">// 07 — data flow</div>
+  <h2>System Data Flow</h2>
+  <svg class="flow-svg" viewBox="0 0 780 220" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#00f5ff"/>
+      </marker>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <!-- Box 1: Hardware -->
+    <rect x="10" y="70" width="140" height="80" rx="4" fill="#0d1428" stroke="#1a2a4a" stroke-width="1.5"/>
+    <rect x="10" y="70" width="140" height="4" rx="2" fill="#00f5ff"/>
+    <text x="80" y="100" text-anchor="middle" font-family="Orbitron,monospace" font-size="9" fill="#00f5ff" letter-spacing="1">HARDWARE</text>
+    <text x="80" y="116" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5a7090">2x Joystick</text>
+    <text x="80" y="130" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5a7090">4x Buttons</text>
+    <text x="80" y="144" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5a7090">Analog + Digital</text>
+
+    <!-- Arrow 1 -->
+    <line x1="152" y1="110" x2="188" y2="110" stroke="#00f5ff" stroke-width="1.5" marker-end="url(#arr)"/>
+    <text x="170" y="104" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="8" fill="#5a7090">GPIO</text>
+
+    <!-- Box 2: Arduino -->
+    <rect x="190" y="70" width="140" height="80" rx="4" fill="#0d1428" stroke="#1a2a4a" stroke-width="1.5"/>
+    <rect x="190" y="70" width="140" height="4" rx="2" fill="#ff6b00"/>
+    <text x="260" y="100" text-anchor="middle" font-family="Orbitron,monospace" font-size="9" fill="#ff6b00" letter-spacing="1">ARDUINO</text>
+    <text x="260" y="116" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5a7090">analogRead()</text>
+    <text x="260" y="130" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5a7090">digitalRead()</text>
+    <text x="260" y="144" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5a7090">Serial.println()</text>
+
+    <!-- Arrow 2 -->
+    <line x1="332" y1="110" x2="368" y2="110" stroke="#00f5ff" stroke-width="1.5" marker-end="url(#arr)"/>
+    <text x="350" y="104" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="8" fill="#5a7090">USB/Serial</text>
+    <text x="350" y="120" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="8" fill="#5a7090">9600 baud</text>
+
+    <!-- Box 3: Python -->
+    <rect x="370" y="70" width="140" height="80" rx="4" fill="#0d1428" stroke="#1a2a4a" stroke-width="1.5"/>
+    <rect x="370" y="70" width="140" height="4" rx="2" fill="#7c3aed"/>
+    <text x="440" y="100" text-anchor="middle" font-family="Orbitron,monospace" font-size="9" fill="#c084fc" letter-spacing="1">PYTHON</text>
+    <text x="440" y="116" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5a7090">serial.readline()</text>
+    <text x="440" y="130" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5a7090">parse + deadzone</text>
+    <text x="440" y="144" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5a7090">SendInput / pynput</text>
+
+    <!-- Arrow 3 -->
+    <line x1="512" y1="110" x2="548" y2="110" stroke="#00f5ff" stroke-width="1.5" marker-end="url(#arr)"/>
+    <text x="530" y="104" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="8" fill="#5a7090">Win32 API</text>
+
+    <!-- Box 4: FreeFire -->
+    <rect x="550" y="70" width="140" height="80" rx="4" fill="#0d1428" stroke="#1a2a4a" stroke-width="1.5"/>
+    <rect x="550" y="70" width="140" height="4" rx="2" fill="#00ff88"/>
+    <text x="620" y="100" text-anchor="middle" font-family="Orbitron,monospace" font-size="9" fill="#00ff88" letter-spacing="1">FREE FIRE</text>
+    <text x="620" y="116" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5a7090">WASD Movement</text>
+    <text x="620" y="130" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5a7090">Mouse Aim</text>
+    <text x="620" y="144" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5a7090">Fire / Scope / Actions</text>
+
+    <!-- Serial data label -->
+    <text x="390" y="35" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="10" fill="#00f5ff" filter="url(#glow)">lx,ly,lsw,rx,ry,rsw,btn1,btn2,btn3,btn4</text>
+    <text x="390" y="52" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5a7090">10 values · comma-separated · 50 Hz</text>
+    <line x1="190" y1="58" x2="550" y2="58" stroke="#1a2a4a" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="190" y1="58" x2="190" y2="70" stroke="#1a2a4a" stroke-width="1"/>
+    <line x1="550" y1="58" x2="550" y2="70" stroke="#1a2a4a" stroke-width="1"/>
+
+    <!-- Latency labels -->
+    <text x="390" y="185" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5a7090">Total round-trip: ~20ms hardware + serial overhead</text>
+  </svg>
+</div>
+</section>
+
+<!-- SETUP -->
+<section id="setup">
+<div class="container">
+  <div class="section-label">// 08 — setup guide</div>
+  <h2>Setup & Running</h2>
+  <div class="two-col">
+    <div>
+      <h3>DEPENDENCIES</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">bash</span><span class="code-file">install</span></div>
+        <pre><span class="cm"># Install Python packages</span>
+pip install pyserial pynput keyboard
+
+<span class="cm"># Arduino IDE Libraries</span>
+<span class="cm"># (none needed — uses built-in Serial)</span></pre>
+      </div>
+      <div class="info-box" style="margin-top:16px;">
+        <strong>Run as Administrator</strong> — required for <code>ctypes.windll.user32.SendInput</code> to inject mouse movements into the game.
+      </div>
+    </div>
+    <div>
+      <h3>STEPS TO RUN</h3>
+      <div style="counter-reset:steps;">
+        <div style="display:flex;gap:16px;padding:12px 0;border-bottom:1px solid var(--border);">
+          <span style="font-family:'Orbitron',monospace;color:var(--accent);font-size:18px;min-width:30px;">01</span>
+          <span style="font-size:13px;line-height:1.6;">Upload <code>arduino_v4.ino</code> to Arduino via IDE. Check <strong>COM3</strong> matches your port.</span>
+        </div>
+        <div style="display:flex;gap:16px;padding:12px 0;border-bottom:1px solid var(--border);">
+          <span style="font-family:'Orbitron',monospace;color:var(--accent);font-size:18px;min-width:30px;">02</span>
+          <span style="font-size:13px;line-height:1.6;">Open terminal <strong>as Administrator</strong>. Navigate to project folder.</span>
+        </div>
+        <div style="display:flex;gap:16px;padding:12px 0;border-bottom:1px solid var(--border);">
+          <span style="font-family:'Orbitron',monospace;color:var(--accent);font-size:18px;min-width:30px;">03</span>
+          <span style="font-size:13px;line-height:1.6;">Run: <code>python final.py</code> — you'll see <em>"Ready! Push RIGHT joystick…"</em></span>
+        </div>
+        <div style="display:flex;gap:16px;padding:12px 0;">
+          <span style="font-family:'Orbitron',monospace;color:var(--accent);font-size:18px;min-width:30px;">04</span>
+          <span style="font-size:13px;line-height:1.6;">Launch FreeFire. Controller is live. <strong>Ctrl+C</strong> to stop cleanly.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:24px;">
+    <div class="warn-box">
+      <strong>⚠ TUNING TIP</strong><br>
+      Change <code>DEADZONE_HIGH</code>, <code>DEADZONE_LOW</code>, and <code>AIM_SENSITIVITY</code> at the top of <code>final.py</code> to tune feel. The default deadzone is 400–624 (out of 0–1023) to compensate for joystick drift at center. Default sensitivity is 20.
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+<div class="container">
+  <div class="footer-glow">FREEFIRE CTRL</div>
+  <div>ARDUINO v4 · PYTHON 3.14 · WINDOWS · DUAL JOYSTICK CONTROLLER</div>
+  <div style="margin-top:8px;color:rgba(90,112,144,0.5);">Built by SATYAVRAT · 10-04-2026</div>
+</div>
+</footer>
+
+<!-- 3D MODEL SCRIPT -->
+<script>
+(function(){
+  const canvas = document.getElementById('c3d');
+  const container = document.getElementById('modelContainer');
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if(!gl){ canvas.parentNode.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;font-family:monospace;color:#5a7090;">WebGL not supported</div>'; return; }
+
+  // Resize
+  window.addEventListener('resize',()=>{
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  });
+
+  // Shaders
+  const vsrc = `
+    attribute vec3 aPos;
+    attribute vec3 aNorm;
+    attribute vec3 aColor;
+    uniform mat4 uMVP;
+    uniform mat4 uModel;
+    varying vec3 vNorm;
+    varying vec3 vColor;
+    varying vec3 vWorldPos;
+    void main(){
+      vec4 wp = uModel * vec4(aPos,1.0);
+      vWorldPos = wp.xyz;
+      vNorm = normalize((uModel * vec4(aNorm,0.0)).xyz);
+      vColor = aColor;
+      gl_Position = uMVP * vec4(aPos,1.0);
+    }`;
+  const fsrc = `
+    precision mediump float;
+    varying vec3 vNorm;
+    varying vec3 vColor;
+    varying vec3 vWorldPos;
+    void main(){
+      vec3 L1 = normalize(vec3(1.0,2.0,3.0));
+      vec3 L2 = normalize(vec3(-2.0,1.0,-1.0));
+      float d1 = max(dot(vNorm,L1),0.0);
+      float d2 = max(dot(vNorm,L2),0.0)*0.3;
+      float amb = 0.15;
+      vec3 col = vColor * (amb + d1*0.8 + d2);
+      gl_FragColor = vec4(col,1.0);
+    }`;
+
+  function compileShader(type,src){
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh,src); gl.compileShader(sh);
+    return sh;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compileShader(gl.VERTEX_SHADER, vsrc));
+  gl.attachShader(prog, compileShader(gl.FRAGMENT_SHADER, fsrc));
+  gl.linkProgram(prog); gl.useProgram(prog);
+
+  const aPos   = gl.getAttribLocation(prog,'aPos');
+  const aNorm  = gl.getAttribLocation(prog,'aNorm');
+  const aColor = gl.getAttribLocation(prog,'aColor');
+  const uMVP   = gl.getUniformLocation(prog,'uMVP');
+  const uModel = gl.getUniformLocation(prog,'uModel');
+
+  // Geometry helpers
+  function boxGeom(cx,cy,cz,w,h,d,r,g,b){
+    const hw=w/2,hh=h/2,hd=d/2;
+    const x0=cx-hw,x1=cx+hw,y0=cy-hh,y1=cy+hh,z0=cz-hd,z1=cz+hd;
+    // 6 faces
+    const faces=[
+      [[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1],[0,0,1]],
+      [[x1,y0,z0],[x0,y0,z0],[x0,y1,z0],[x1,y1,z0],[0,0,-1]],
+      [[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1],[0,-1,0]],
+      [[x0,y1,z1],[x1,y1,z1],[x1,y1,z0],[x0,y1,z0],[0,1,0]],
+      [[x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0],[-1,0,0]],
+      [[x1,y0,z1],[x1,y0,z0],[x1,y1,z0],[x1,y1,z1],[1,0,0]],
+    ];
+    const verts=[],norms=[],cols=[],idxs=[];
+    let base=0;
+    faces.forEach(f=>{
+      const n=f[4];
+      for(let i=0;i<4;i++){verts.push(...f[i]);norms.push(...n);cols.push(r,g,b);}
+      idxs.push(base,base+1,base+2,base,base+2,base+3);
+      base+=4;
+    });
+    return {verts,norms,cols,idxs};
+  }
+
+  function cylinderGeom(cx,cy,cz,radius,height,segs,r,g,b){
+    const verts=[],norms=[],cols=[],idxs=[];
+    // sides
+    for(let i=0;i<segs;i++){
+      const a0=i/segs*Math.PI*2, a1=(i+1)/segs*Math.PI*2;
+      const x0=cx+Math.cos(a0)*radius,z0=cz+Math.sin(a0)*radius;
+      const x1=cx+Math.cos(a1)*radius,z1=cz+Math.sin(a1)*radius;
+      const n0=[Math.cos(a0),0,Math.sin(a0)];
+      const n1=[Math.cos(a1),0,Math.sin(a1)];
+      const yb=cy,yt=cy+height;
+      const base=verts.length/3;
+      verts.push(x0,yb,z0,x1,yb,z1,x1,yt,z1,x0,yt,z0);
+      norms.push(...n0,...n1,...n1,...n0);
+      cols.push(r,g,b,r,g,b,r,g,b,r,g,b);
+      idxs.push(base,base+1,base+2,base,base+2,base+3);
+    }
+    // top cap
+    const tc=verts.length/3; verts.push(cx,cy+height,cz); norms.push(0,1,0); cols.push(r,g,b);
+    for(let i=0;i<segs;i++){
+      const a0=i/segs*Math.PI*2,a1=(i+1)/segs*Math.PI*2;
+      const rim=verts.length/3;
+      verts.push(cx+Math.cos(a0)*radius,cy+height,cz+Math.sin(a0)*radius);
+      verts.push(cx+Math.cos(a1)*radius,cy+height,cz+Math.sin(a1)*radius);
+      norms.push(0,1,0,0,1,0); cols.push(r,g,b,r,g,b);
+      idxs.push(tc,rim,rim+1);
+    }
+    return {verts,norms,cols,idxs};
+  }
+
+  function mergeGeoms(list){
+    const verts=[],norms=[],cols=[],idxs=[];
+    let off=0;
+    list.forEach(g=>{
+      const n=g.verts.length/3;
+      verts.push(...g.verts); norms.push(...g.norms); cols.push(...g.cols);
+      g.idxs.forEach(i=>idxs.push(i+off)); off+=n;
+    });
+    return {verts,norms,cols,idxs};
+  }
+
+  // Build controller geometry
+  const geoms=[];
+
+  // Main body (dark grey)
+  geoms.push(boxGeom(0,0,0,3.6,0.5,1.8,0.18,0.18,0.22));
+  // Raised center ridge
+  geoms.push(boxGeom(0,0.25,0,1.0,0.12,1.6,0.15,0.15,0.20));
+  // Left grip
+  geoms.push(boxGeom(-1.4,-0.3,0,0.7,0.7,1.4,0.14,0.14,0.19));
+  // Right grip
+  geoms.push(boxGeom(1.4,-0.3,0,0.7,0.7,1.4,0.14,0.14,0.19));
+
+  // LEFT Joystick (cyan tint)
+  geoms.push(cylinderGeom(-0.9,0.3,-0.3,0.28,0.08,16,0.16,0.22,0.28));
+  geoms.push(cylinderGeom(-0.9,0.38,-0.3,0.22,0.22,16,0.08,0.55,0.65));
+  geoms.push(cylinderGeom(-0.9,0.6,-0.3,0.18,0.06,16,0.12,0.65,0.75));
+
+  // RIGHT Joystick (orange tint)
+  geoms.push(cylinderGeom(0.9,0.3,-0.3,0.28,0.08,16,0.28,0.22,0.16));
+  geoms.push(cylinderGeom(0.9,0.38,-0.3,0.22,0.22,16,0.65,0.38,0.08));
+  geoms.push(cylinderGeom(0.9,0.6,-0.3,0.18,0.06,16,0.75,0.45,0.12));
+
+  // 4 push buttons on top center
+  const btnPos=[[-0.2,0.32,0.5],[0.2,0.32,0.5],[-0.2,0.32,0.2],[0.2,0.32,0.2]];
+  btnPos.forEach(bp=>{
+    geoms.push(cylinderGeom(bp[0],bp[1],bp[2],0.12,0.10,10,0.2,0.4,1.0));
+    geoms.push(cylinderGeom(bp[0],bp[1]+0.06,bp[2],0.10,0.06,10,0.3,0.6,1.0));
+  });
+
+  // USB port on back
+  geoms.push(boxGeom(0,-0.05,-0.9,0.3,0.15,0.05,0.08,0.08,0.1));
+
+  const mesh = mergeGeoms(geoms);
+
+  function makeBuf(data, type){
+    const b=gl.createBuffer();
+    gl.bindBuffer(type,b);
+    gl.bufferData(type,data,gl.STATIC_DRAW);
+    return b;
+  }
+
+  const vBuf = makeBuf(new Float32Array(mesh.verts), gl.ARRAY_BUFFER);
+  const nBuf = makeBuf(new Float32Array(mesh.norms), gl.ARRAY_BUFFER);
+  const cBuf = makeBuf(new Float32Array(mesh.cols), gl.ARRAY_BUFFER);
+  const iBuf = makeBuf(new Uint16Array(mesh.idxs), gl.ELEMENT_ARRAY_BUFFER);
+  const indexCount = mesh.idxs.length;
+
+  // Matrix math
+  function mat4mul(a,b){
+    const r=new Float32Array(16);
+    for(let i=0;i<4;i++) for(let j=0;j<4;j++){
+      let s=0; for(let k=0;k<4;k++) s+=a[i*4+k]*b[k*4+j];
+      r[i*4+j]=s;
+    }
+    return r;
+  }
+  function perspective(fov,asp,near,far){
+    const f=1/Math.tan(fov/2),r=new Float32Array(16);
+    r[0]=f/asp;r[5]=f;r[10]=(far+near)/(near-far);r[11]=-1;
+    r[14]=2*far*near/(near-far);
+    return r;
+  }
+  function rotX(a){const c=Math.cos(a),s=Math.sin(a),r=new Float32Array([1,0,0,0,0,c,-s,0,0,s,c,0,0,0,0,1]);return r;}
+  function rotY(a){const c=Math.cos(a),s=Math.sin(a),r=new Float32Array([c,0,s,0,0,1,0,0,-s,0,c,0,0,0,0,1]);return r;}
+  function translate(x,y,z){const r=new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,x,y,z,1]);return r;}
+
+  // Mouse/touch interaction
+  let angleX=0.35,angleY=0.5,zoom=5.5;
+  let dragging=false,lastX=0,lastY=0;
+  canvas.addEventListener('mousedown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;});
+  canvas.addEventListener('mouseup',()=>dragging=false);
+  canvas.addEventListener('mousemove',e=>{
+    if(!dragging)return;
+    angleY+=(e.clientX-lastX)*0.01;
+    angleX+=(e.clientY-lastY)*0.01;
+    lastX=e.clientX;lastY=e.clientY;
+  });
+  canvas.addEventListener('wheel',e=>{zoom=Math.max(3,Math.min(10,zoom+e.deltaY*0.01));});
+
+  // Touch
+  let lastTouchX=0,lastTouchY=0;
+  canvas.addEventListener('touchstart',e=>{lastTouchX=e.touches[0].clientX;lastTouchY=e.touches[0].clientY;});
+  canvas.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    angleY+=(e.touches[0].clientX-lastTouchX)*0.01;
+    angleX+=(e.touches[0].clientY-lastTouchY)*0.01;
+    lastTouchX=e.touches[0].clientX;lastTouchY=e.touches[0].clientY;
+  },{passive:false});
+
+  function render(t){
+    requestAnimationFrame(render);
+    gl.viewport(0,0,canvas.width,canvas.height);
+    gl.clearColor(0.02,0.05,0.1,1); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);
+
+    const asp = canvas.width/canvas.height;
+    const proj = perspective(1.0, asp, 0.1, 100);
+    const view = translate(0, 0, -zoom);
+    const model = mat4mul(rotX(angleX), rotY(angleY+t*0.0003));
+    const mv = mat4mul(view, model);
+    const mvp = mat4mul(proj, mv);
+
+    gl.uniformMatrix4fv(uMVP, false, mvp);
+    gl.uniformMatrix4fv(uModel, false, model);
+
+    function bindBuf(buf,loc,size){
+      gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc,size,gl.FLOAT,false,0,0);
+    }
+    bindBuf(vBuf,aPos,3);
+    bindBuf(nBuf,aNorm,3);
+    bindBuf(cBuf,aColor,3);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,iBuf);
+    gl.drawElements(gl.TRIANGLES,indexCount,gl.UNSIGNED_SHORT,0);
+  }
+  requestAnimationFrame(render);
+})();
+</script>
+
+</body>
+</html>
